@@ -1,0 +1,89 @@
+---
+- name: Install nopcommerce
+  become: yes
+  hosts: all
+  tasks:
+    - name: download microsoft key file
+      get_url:
+        url: https://packages.microsoft.com/config/ubuntu/20.04/packages-microsoft-prod.deb 
+        dest: /etc/packages-microsoft-prod.deb
+    - name: download dpkg package
+      dpkg_selections:
+        name: dpkg package
+        deb: /etc/packages-microsoft-prod.deb
+        selection: install
+    - name: install .Net core run time
+      ansible.builtin.apt:
+        name: install the .NET runtime packages
+      apt:
+        pkg:
+        - apt-transport-https
+        - aspnetcore-runtime-6.0
+        update_cache: yes
+    - name: install apache2
+      apt:
+        name: apache2
+        update_cache: yes
+        state: latest
+      notify:
+        - restart apache2
+    - name: create a directory nopcommerce450
+      ansible.builtin.file:
+        path: /var/www/nopCommerce450
+        state: directory
+        mode: '0777'
+    - name: go to the folder
+      ansible.builtin.file:
+        chdir: /var/www/nopCommerce45000
+    - name: download nopcommerce zipfile 
+      get_url:
+        url: https://github.com/nopSolutions/nopCommerce/releases/download/release-4.50.2/nopCommerce_4.50.2_NoSource_linux_x64.zip
+        dest: /var/www/nopCommerce450
+    - name: Instsll unzip
+      apt:
+        name: unzip
+        update_cache: yes
+        state: latest
+    - name: Unarchive a file that is already on the remote machine
+      ansible.builtin.unarchive:
+        src: /var/www/nopCommerce450
+        dest: /var/www/nopCommerce450
+        remote_src: yes
+    - name: Create a  bin directory 
+      ansible.builtin.file:
+        path: /var/www/nopCommerce450/bin
+        state: directory
+        mode: '0777' 
+    - name: Create a logs  directory 
+      ansible.builtin.file:
+        path: /var/www/nopCommerce450/logs
+        state: directory
+        mode: '0777' 
+    - name: change directory
+      ansible.builtin.file:
+        chdir: /var/www/
+    - name: Change file group and permissions
+      ansible.builtin.file:
+        path: /var/www/
+        owner: www-data 
+        group: www-data
+        mode: '0777'
+    - name: configureing nopcommerce
+      copy:
+        src: /home/devops/service.conf
+        dest: /etc/systemd/system/nopCommerce450.service
+    - name: Make sure a service unit is running
+      systemd:
+        state: started
+        name:  nopCommerce450.service    
+
+
+
+
+
+
+
+
+
+      
+
